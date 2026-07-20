@@ -1,11 +1,12 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
+const redis = Redis.fromEnv();
 const KEY = 'nofap_start_timestamp';
 
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      const ts = await kv.get(KEY);
+      const ts = await redis.get(KEY);
       return res.status(200).json({ ts: ts ?? null });
     }
 
@@ -14,12 +15,12 @@ export default async function handler(req, res) {
       if (typeof ts !== 'number' || isNaN(ts)) {
         return res.status(400).json({ error: 'ts must be a number (milliseconds timestamp)' });
       }
-      await kv.set(KEY, ts);
+      await redis.set(KEY, ts);
       return res.status(200).json({ ok: true });
     }
 
     if (req.method === 'DELETE') {
-      await kv.del(KEY);
+      await redis.del(KEY);
       return res.status(200).json({ ok: true });
     }
 
