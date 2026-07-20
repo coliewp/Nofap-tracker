@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>90 Day Streak</title>
+<style>
+  :root{
+    --bg: #141a17;
+    --panel: #1c2420;
+    --line: #2a3530;
+    --white-box: #ffffff;
+    --box-border: #101410;
+    --ink: #101410;
+    --text: #eef1ee;
+    --muted: #8fa198;
+    --green: #3fa34d;
+    --green-deep: #2c7a38;
+  }
+  *{box-sizing:border-box;}
+  html, body{
+    height:100%;
+    margin:0;
+    overflow:hidden;
+    background:var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+    color:var(--text);
+  }
+  .app{
+    height:100vh;
+    width:100vw;
+    display:flex;
+    flex-direction:column;
+    padding: 18px 24px 22px;
+  }
+
+  /* header */
+  .head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap: 10px 24px;
+    margin-bottom:14px;
+  }
+  .head h1{
+    font-size: clamp(18px, 2.4vw, 26px);
+    letter-spacing: 0.02em;
+    margin:0;
+    font-weight:700;
+  }
+  .streak{
+    font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+    font-size: clamp(14px, 1.8vw, 18px);
+    color: var(--green);
+  }
+  .streak b{ color:#fff; }
+  .bar{
+    height:6px;
+    width:100%;
+    background:var(--line);
+    border-radius:4px;
+    overflow:hidden;
+    margin-bottom:16px;
+    flex-shrink:0;
+  }
+  .bar-fill{
+    height:100%;
+    background: linear-gradient(90deg, var(--green-deep), var(--green));
+    width:0%;
+    transition: width 0.6s ease;
+  }
+
+  /* form (start screen) */
+  .start-wrap{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .form-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding: 28px 30px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    width: min(420px, 92vw);
+  }
+  .form-card p{
+    margin:0 0 4px;
+    color:var(--muted);
+    font-size:14px;
+    line-height:1.4;
+  }
+  .row{
+    display:flex;
+    gap:10px;
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    flex:1;
+  }
+  .field label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--muted);
+  }
+  .field input, .field select{
+    background:#10150f;
+    border:1px solid var(--line);
+    color:var(--text);
+    border-radius:8px;
+    padding:9px 8px;
+    font-size:14px;
+    width:100%;
+  }
+  .field input:focus, .field select:focus{
+    outline:2px solid var(--green);
+    outline-offset:1px;
+  }
+  button{
+    cursor:pointer;
+    border:none;
+    border-radius:8px;
+    font-weight:600;
+    font-size:14px;
+    padding:11px 16px;
+  }
+  .start-btn{
+    background:var(--green);
+    color:#0d1410;
+    margin-top:4px;
+  }
+  .start-btn:hover{ background: #49b859; }
+
+  /* tracker view */
+  .tracker{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  .grid{
+    flex:1;
+    display:grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(9, 1fr);
+    gap: 8px;
+    min-height:0;
+  }
+  @media (max-width: 700px){
+    .grid{
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows: repeat(15, 1fr);
+    }
+  }
+  .box{
+    background: var(--white-box);
+    border: 2px solid var(--box-border);
+    border-radius:8px;
+    color: var(--ink);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    line-height:1;
+    transition: background 0.4s ease, color 0.4s ease, transform 0.2s ease;
+  }
+  .box .num{
+    font-weight:800;
+    font-size: clamp(10px, 1.6vw, 20px);
+  }
+  .box .lbl{
+    font-size: clamp(6px, 0.8vw, 10px);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:#5a6660;
+    margin-top:2px;
+  }
+  .box.done{
+    background: var(--green);
+    color:#fff;
+    animation: pop 0.4s ease;
+  }
+  .box.done .lbl{ color: rgba(255,255,255,0.75); }
+  .box.today{
+    box-shadow: 0 0 0 2px var(--green) inset;
+  }
+  @keyframes pop{
+    0%{ transform:scale(0.85); }
+    60%{ transform:scale(1.06); }
+    100%{ transform:scale(1); }
+  }
+
+  .footer-row{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:14px;
+    flex-shrink:0;
+  }
+  .reset-btn{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--muted);
+  }
+  .reset-btn:hover{
+    border-color:#a45050;
+    color:#e08585;
+  }
+  .preview{
+    color: var(--green);
+    font-size:13px;
+    margin:0;
+    font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+  }
+  .form-error{
+    color:#e08585;
+    font-size:13px;
+    margin:0;
+  }
+  .hidden{ display:none !important; }
+  .loading{
+    display:flex; align-items:center; justify-content:center;
+    flex:1; color:var(--muted); font-size:14px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="head">
+    <h1>90 Day Streak</h1>
+    <div class="streak" id="streakText"></div>
+  </div>
+  <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+
+  <div id="loading" class="loading">Loading…</div>
+
+  <div id="startWrap" class="start-wrap hidden">
+    <div id="startForm" class="form-card">
+      <p>Enter the exact date and time your streak started. It's saved automatically, so closing or reloading this page won't reset it.</p>
+      <div class="row">
+        <div class="field">
+          <label for="year">Year</label>
+          <input type="number" id="year" min="2000" max="2100" placeholder="e.g. 2026" required>
+        </div>
+        <div class="field">
+          <label for="month">Month</label>
+          <select id="month" required>
+            <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+            <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
+            <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
+            <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="day">Day</label>
+          <input type="number" id="day" min="1" max="31" required>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="hour">Hour</label>
+          <input type="number" id="hour" min="1" max="12" required>
+        </div>
+        <div class="field">
+          <label for="ampm">AM / PM</label>
+          <select id="ampm" required>
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
+        </div>
+      </div>
+      <p id="formError" class="form-error hidden"></p>
+      <p id="previewText" class="preview"></p>
+      <button type="button" id="startBtn" class="start-btn">Start my journey</button>
+    </div>
+  </div>
+
+  <div id="trackerWrap" class="tracker hidden">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="footer-row">
+    <button id="resetBtn" class="reset-btn hidden">Reset streak</button>
+    <span id="resetConfirmRow" class="hidden" style="display:flex; gap:8px; align-items:center;">
+      <span style="font-size:13px; color:var(--muted);">Reset your streak? This can't be undone.</span>
+      <button id="resetConfirmBtn" class="reset-btn" style="border-color:#a45050; color:#e08585;">Yes, reset</button>
+      <button id="resetCancelBtn" class="reset-btn">Cancel</button>
+    </span>
+  </div>
+
+</div>
+
+<script>
+const STORAGE_KEY = 'nofap_start_timestamp';
+const TOTAL_DAYS = 90;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const loadingEl = document.getElementById('loading');
+const startWrap = document.getElementById('startWrap');
+const trackerWrap = document.getElementById('trackerWrap');
+const startForm = document.getElementById('startForm');
+const resetBtn = document.getElementById('resetBtn');
+const resetConfirmRow = document.getElementById('resetConfirmRow');
+const resetConfirmBtn = document.getElementById('resetConfirmBtn');
+const resetCancelBtn = document.getElementById('resetCancelBtn');
+const formError = document.getElementById('formError');
+const previewText = document.getElementById('previewText');
+
+const yearEl = document.getElementById('year');
+const monthEl = document.getElementById('month');
+const dayEl = document.getElementById('day');
+const hourEl = document.getElementById('hour');
+const ampmEl = document.getElementById('ampm');
+
+function prefillNow(){
+  const now = new Date();
+  yearEl.value = now.getFullYear();
+  monthEl.value = String(now.getMonth() + 1);
+  dayEl.value = now.getDate();
+  let h = now.getHours();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12;
+  if(h === 0) h = 12;
+  hourEl.value = h;
+  ampmEl.value = ampm;
+  updatePreview();
+}
+
+function parseFormDate(){
+  const yearInput = yearEl.value;
+  const month = parseInt(monthEl.value, 10);
+  const day = parseInt(dayEl.value, 10);
+  let hour = parseInt(hourEl.value, 10);
+  const ampm = ampmEl.value;
+  let year = parseInt(yearInput, 10);
+
+  if(!year || !month || !day || !hour) return null;
+  if(year < 100) year += 2000;
+
+  if(ampm === 'PM' && hour !== 12) hour += 12;
+  if(ampm === 'AM' && hour === 12) hour = 0;
+
+  const d = new Date(year, month - 1, day, hour, 0, 0, 0);
+  if(isNaN(d.getTime())) return null;
+  return d;
+}
+
+function updatePreview(){
+  const d = parseFormDate();
+  if(!d){
+    previewText.textContent = '';
+    return;
+  }
+  const opts = { weekday:'short', year:'numeric', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' };
+  previewText.textContent = 'Start set to: ' + d.toLocaleString(undefined, opts);
+}
+
+[yearEl, monthEl, dayEl, hourEl, ampmEl].forEach(el => {
+  el.addEventListener('input', updatePreview);
+  el.addEventListener('change', updatePreview);
+});
+const gridEl = document.getElementById('grid');
+const streakText = document.getElementById('streakText');
+const barFill = document.getElementById('barFill');
+
+let refreshTimer = null;
+
+async function init(){
+  try{
+    const res = await fetch('/api/streak');
+    const data = await res.json();
+    if(data && typeof data.ts === 'number'){
+      showTracker(data.ts);
+    } else {
+      showForm();
+    }
+  }catch(err){
+    showForm();
+  }
+  loadingEl.classList.add('hidden');
+}
+
+function showForm(){
+  startWrap.classList.remove('hidden');
+  trackerWrap.classList.add('hidden');
+  resetBtn.classList.add('hidden');
+  resetConfirmRow.classList.add('hidden');
+  if(refreshTimer){ clearInterval(refreshTimer); refreshTimer = null; }
+  prefillNow();
+}
+
+function showTracker(startTs){
+  startWrap.classList.add('hidden');
+  trackerWrap.classList.remove('hidden');
+  resetBtn.classList.remove('hidden');
+  resetConfirmRow.classList.add('hidden');
+  buildGrid();
+  renderProgress(startTs);
+  if(refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(() => renderProgress(startTs), 30000);
+}
+
+function buildGrid(){
+  gridEl.innerHTML = '';
+  for(let i = 1; i <= TOTAL_DAYS; i++){
+    const box = document.createElement('div');
+    box.className = 'box';
+    box.id = 'box-' + i;
+    box.innerHTML = `<div class="num">${i}</div><div class="lbl">Day</div>`;
+    gridEl.appendChild(box);
+  }
+}
+
+function renderProgress(startTs){
+  const now = Date.now();
+  const elapsed = now - startTs;
+
+  if(elapsed < 0){
+    // scheduled to start in the future
+    for(let i = 1; i <= TOTAL_DAYS; i++){
+      const box = document.getElementById('box-' + i);
+      if(!box) continue;
+      box.classList.remove('done');
+      box.classList.toggle('today', i === 1);
+    }
+    barFill.style.width = '0%';
+    const msUntil = -elapsed;
+    const hoursUntil = Math.floor(msUntil / (60 * 60 * 1000));
+    const minsUntil = Math.floor((msUntil % (60 * 60 * 1000)) / (60 * 1000));
+    streakText.innerHTML = `<b>Not started yet</b> &middot; begins in ${hoursUntil}h ${minsUntil}m`;
+    return;
+  }
+
+  const completedDays = Math.max(0, Math.min(TOTAL_DAYS, Math.floor(elapsed / DAY_MS)));
+  const currentDay = Math.min(TOTAL_DAYS, completedDays + 1);
+
+  for(let i = 1; i <= TOTAL_DAYS; i++){
+    const box = document.getElementById('box-' + i);
+    if(!box) continue;
+    box.classList.toggle('done', i <= completedDays);
+    box.classList.toggle('today', i === currentDay && completedDays < TOTAL_DAYS);
+  }
+
+  barFill.style.width = ((completedDays / TOTAL_DAYS) * 100).toFixed(2) + '%';
+
+  if(completedDays >= TOTAL_DAYS){
+    streakText.innerHTML = `<b>90 / 90</b> — journey complete`;
+  } else {
+    streakText.innerHTML = `<b>Day ${currentDay}</b> of 90 &middot; ${completedDays} full day${completedDays === 1 ? '' : 's'} completed`;
+  }
+}
+
+document.getElementById('startBtn').addEventListener('click', async () => {
+  formError.classList.add('hidden');
+  formError.textContent = '';
+
+  const startDate = parseFormDate();
+
+  if(!startDate){
+    formError.textContent = 'Please fill in year, month, day and hour with valid values.';
+    formError.classList.remove('hidden');
+    return;
+  }
+
+  const ts = startDate.getTime();
+
+  try{
+    const res = await fetch('/api/streak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ts })
+    });
+    if(!res.ok) throw new Error('save failed');
+    showTracker(ts);
+  }catch(err){
+    formError.textContent = 'Could not save your start date. Please check your connection and try again.';
+    formError.classList.remove('hidden');
+  }
+});
+
+resetBtn.addEventListener('click', () => {
+  resetBtn.classList.add('hidden');
+  resetConfirmRow.classList.remove('hidden');
+});
+
+resetCancelBtn.addEventListener('click', () => {
+  resetConfirmRow.classList.add('hidden');
+  resetBtn.classList.remove('hidden');
+});
+
+resetConfirmBtn.addEventListener('click', async () => {
+  try{
+    await fetch('/api/streak', { method: 'DELETE' });
+  }catch(err){
+    // ignore, will just show the form regardless
+  }
+  showForm();
+});
+
+init();
+</script>
+</body>
+</html>
